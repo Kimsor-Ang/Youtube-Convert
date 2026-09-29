@@ -51,13 +51,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const completedResetBtn = document.getElementById("completedResetBtn");
     const errorResetBtn = document.getElementById("errorResetBtn");
 
-    // Library Elements
-    const libraryEmptyState = document.getElementById("libraryEmptyState");
-    const libraryList = document.getElementById("libraryList");
-    const libraryCountBadge = document.getElementById("libraryCountBadge");
-    const refreshLibraryBtn = document.getElementById("refreshLibraryBtn");
-    const openFolderBtn = document.getElementById("openFolderBtn");
-
     // State Variables
     let currentVideoData = null;
     let selectedFormat = "mp4";
@@ -66,27 +59,21 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Reset App State
     function resetApp() {
-        // Clear active polling
         if (activePollInterval) {
             clearInterval(activePollInterval);
             activePollInterval = null;
         }
-        // Reset state
         currentVideoData = null;
         selectedFormat = "mp4";
         selectedQuality = "1080p";
-        // Hide sections
         previewSection.classList.add("hidden");
         progressSection.classList.add("hidden");
         downloadCompletedArea.classList.add("hidden");
         downloadErrorArea.classList.add("hidden");
-        // Reset the URL input box
         youtubeUrlInput.value = "";
         clearBtn.classList.add("hidden");
         youtubeUrlInput.focus();
-        // Re-enable download button in case it was locked
         startDownloadBtn.disabled = false;
-        // Scroll back to top
         window.scrollTo({ top: 0, behavior: "smooth" });
         showToast("Ready for a new download!", "info");
     }
@@ -95,9 +82,6 @@ document.addEventListener("DOMContentLoaded", () => {
     resetBtn.addEventListener("click", resetApp);
     completedResetBtn.addEventListener("click", resetApp);
     errorResetBtn.addEventListener("click", resetApp);
-
-    // Load initial library items
-    loadLibrary();
 
     // Input handlers
     youtubeUrlInput.addEventListener("input", () => {
@@ -371,7 +355,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
                     // Show success area
                     completedFilename.textContent = task.filename;
-                    completedFilesize.textContent = `Size: ${task.filesize} — saved to your Downloads folder`;
+                    completedFilesize.textContent = `Size: ${task.filesize} • Downloaded directly to browser`;
                     directSaveBtn.href = task.download_url;
                     directSaveBtn.setAttribute("download", task.filename);
                     downloadCompletedArea.classList.remove("hidden");
@@ -386,10 +370,8 @@ document.addEventListener("DOMContentLoaded", () => {
                     autoLink.click();
                     setTimeout(() => document.body.removeChild(autoLink), 1000);
 
-                    showToast(`✅ "${task.filename.slice(0, 40)}..." saved to Downloads!`, "success");
+                    showToast(`✅ Downloading to your browser now!`, "success");
 
-                    // Refresh library
-                    loadLibrary();
 
                 } else if (status === "error") {
                     clearInterval(activePollInterval);
@@ -409,115 +391,6 @@ document.addEventListener("DOMContentLoaded", () => {
         progressStatusText.textContent = "Failed";
         showToast("Download error: " + msg, "error");
     }
-
-    // Load Local Download Library
-    async function loadLibrary() {
-        try {
-            const res = await fetch("/api/library");
-            const data = await res.json();
-
-            if (data.success) {
-                renderLibrary(data.files);
-            }
-        } catch (e) {
-            console.error("Failed to load library:", e);
-        }
-    }
-
-    function renderLibrary(files) {
-        libraryCountBadge.textContent = `${files.length} file${files.length === 1 ? '' : 's'}`;
-
-        if (!files || files.length === 0) {
-            libraryEmptyState.classList.remove("hidden");
-            libraryList.classList.add("hidden");
-            return;
-        }
-
-        libraryEmptyState.classList.add("hidden");
-        libraryList.classList.remove("hidden");
-        libraryList.innerHTML = "";
-
-        files.forEach(file => {
-            const isMp3 = file.ext === "mp3" || file.ext === "m4a";
-            const item = document.createElement("div");
-            item.className = "library-item";
-            item.innerHTML = `
-                <div class="item-left">
-                    <div class="item-badge ${isMp3 ? 'badge-mp3' : 'badge-mp4'}">
-                        ${file.ext.toUpperCase()}
-                    </div>
-                    <div class="item-info">
-                        <div class="item-name" title="${file.name}">${file.name}</div>
-                        <div class="item-meta">
-                            <span>${file.size}</span>
-                            <span>•</span>
-                            <span>${file.modified}</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="item-actions">
-                    <a href="${file.download_url}" class="btn-item-action btn-item-download" download="${file.name}" title="Save file to browser">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                        <span>Save</span>
-                    </a>
-                    <button type="button" class="btn-item-action btn-item-delete" data-filename="${file.name}" title="Delete file">
-                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                    </button>
-                </div>
-            `;
-
-            // Delete handler
-            item.querySelector(".btn-item-delete").addEventListener("click", async (e) => {
-                const fname = e.currentTarget.getAttribute("data-filename");
-                if (confirm(`Are you sure you want to delete "${fname}"?`)) {
-                    await deleteFile(fname);
-                }
-            });
-
-            libraryList.appendChild(item);
-        });
-    }
-
-    async function deleteFile(filename) {
-        try {
-            const res = await fetch("/api/delete-file", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ filename })
-            });
-            const data = await res.json();
-            if (data.success) {
-                showToast("File deleted from library.", "info");
-                loadLibrary();
-            } else {
-                showToast(data.error || "Could not delete file", "error");
-            }
-        } catch (e) {
-            showToast("Delete failed", "error");
-        }
-    }
-
-    // Open Downloads Folder in Windows Explorer
-    async function openDownloadsFolder() {
-        try {
-            const res = await fetch("/api/open-folder", { method: "POST" });
-            const data = await res.json();
-            if (data.success) {
-                showToast("Opened downloads directory in File Explorer.", "success");
-            } else {
-                showToast("Could not open folder: " + data.error, "error");
-            }
-        } catch (e) {
-            showToast("Failed to open folder", "error");
-        }
-    }
-
-    openFolderBtn.addEventListener("click", openDownloadsFolder);
-    completedFolderBtn.addEventListener("click", openDownloadsFolder);
-    refreshLibraryBtn.addEventListener("click", () => {
-        loadLibrary();
-        showToast("Library updated", "info");
-    });
 
     // Toast Notification Utility
     function showToast(message, type = "info") {
