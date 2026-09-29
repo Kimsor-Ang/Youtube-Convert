@@ -8,12 +8,19 @@ import shutil
 import tempfile
 import threading
 import webbrowser
+import jinja2
 from pathlib import Path
 from flask import Flask, render_template, request, jsonify, send_file, Response
 import yt_dlp
 
 app = Flask(__name__)
 BASE_DIR = Path(__file__).resolve().parent
+
+# Support index.html in both templates/ and root directory to prevent 500 errors
+app.jinja_loader = jinja2.ChoiceLoader([
+    jinja2.FileSystemLoader(str(BASE_DIR / "templates")),
+    jinja2.FileSystemLoader(str(BASE_DIR)),
+])
 
 # Find FFmpeg binary
 def find_ffmpeg():
