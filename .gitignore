@@ -1,0 +1,7 @@
+runtime.txt
+downloads/
+*.pyc
+__pycache__/
+*.log
+cookies.txt
+.env
