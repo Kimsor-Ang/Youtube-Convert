@@ -93,13 +93,12 @@ def get_base_ydl_opts():
         "noprogress": True,
         "no_warnings": True,
         "noplaylist": True,
-        "socket_timeout": 10,
-        "retries": 2,
-        "fragment_retries": 2,
+        "socket_timeout": 30,
+        "retries": 5,
+        "fragment_retries": 5,
         "extractor_args": {
             "youtube": {
-                "player_client": ["android", "ios", "web"],
-                "player_skip": ["webpage", "configs"]
+                "player_client": ["android", "ios", "web"]
             }
         }
     }
@@ -280,9 +279,16 @@ def run_download_task(task_id, raw_url, format_type, quality):
             if matches:
                 matches.sort(key=lambda p: p.stat().st_mtime, reverse=True)
                 final_file = matches[0]
+
+                # CRITICAL FIX: If user requested mp3 but file isn't .mp3, rename it
+                if format_type == "mp3" and final_file.suffix.lower() != ".mp3":
+                    mp3_path = final_file.with_suffix(".mp3")
+                    final_file.rename(mp3_path)
+                    final_file = mp3_path
+
                 final_size_bytes = final_file.stat().st_size
                 final_size = format_bytes(final_size_bytes) if final_size_bytes > 0 else "Unknown"
-                
+
                 with tasks_lock:
                     tasks[task_id].update({
                         "status": "completed",
