@@ -5,3 +5,4 @@ __pycache__/
 *.log
 cookies.txt
 .env
+youtube.txt

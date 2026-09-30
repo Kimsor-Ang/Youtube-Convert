@@ -22,6 +22,24 @@ app.jinja_loader = jinja2.ChoiceLoader([
     jinja2.FileSystemLoader(str(BASE_DIR)),
 ])
 
+# Enable CORS for local testing (e.g. VS Code Live Server on port 5500)
+@app.after_request
+def add_cors_headers(response):
+    response.headers["Access-Control-Allow-Origin"] = "*"
+    response.headers["Access-Control-Allow-Headers"] = "Content-Type,Authorization"
+    response.headers["Access-Control-Allow-Methods"] = "GET,POST,OPTIONS"
+    return response
+
+@app.before_request
+def handle_preflight():
+    if request.method == "OPTIONS":
+        res = Response()
+        res.headers["Access-Control-Allow-Origin"] = "*"
+        res.headers["Access-Control-Allow-Headers"] = "Content-Type,Authorization"
+        res.headers["Access-Control-Allow-Methods"] = "GET,POST,OPTIONS"
+        return res
+
+
 # Find FFmpeg binary
 def find_ffmpeg():
     which_ffmpeg = shutil.which("ffmpeg")
@@ -67,6 +85,7 @@ def clean_youtube_url(url):
 def get_base_ydl_opts():
     opts = {
         "quiet": True,
+        "noprogress": True,
         "no_warnings": True,
         "noplaylist": True,
         "socket_timeout": 10,
@@ -191,7 +210,7 @@ def run_download_task(task_id, raw_url, format_type, quality):
 
     # Use a temporary directory — deleted after the file is served
     tmp_dir = tempfile.mkdtemp(prefix="streamvault_")
-    out_tmpl = os.path.join(tmp_dir, "%(title).120s [%(id)s].%(ext)s")
+    out_tmpl = os.path.join(tmp_dir, "%(title).120s.%(ext)s")
 
     def progress_hook(d):
         with tasks_lock:
@@ -256,6 +275,9 @@ def run_download_task(task_id, raw_url, format_type, quality):
             if matches:
                 matches.sort(key=lambda p: p.stat().st_mtime, reverse=True)
                 final_file = matches[0]
+                final_size_bytes = final_file.stat().st_size
+                final_size = format_bytes(final_size_bytes) if final_size_bytes > 0 else "Unknown"
+                
                 with tasks_lock:
                     tasks[task_id].update({
                         "status": "completed",
@@ -263,7 +285,9 @@ def run_download_task(task_id, raw_url, format_type, quality):
                         "filename": final_file.name,
                         "file_path": str(final_file),
                         "tmp_dir": tmp_dir,
-                        "download_url": f"/api/file/{task_id}"
+                        "download_url": f"/api/file/{task_id}",
+                        "downloaded_bytes": final_size,
+                        "total_bytes": final_size
                     })
             else:
                 raise Exception("Could not locate the downloaded file.")
@@ -361,7 +385,7 @@ def open_browser(port):
 
 if __name__ == "__main__":
     purge_old_streamvault_temps()
-    port = int(os.environ.get("PORT", 5000))
+    port = int(os.environ.get("PORT", 5002))
     is_cloud = os.environ.get("RAILWAY_ENVIRONMENT") or os.environ.get("RENDER") or os.environ.get("DYNO")
     print(f"=====================================================")
     print(f" StreamVault running on port {port}")

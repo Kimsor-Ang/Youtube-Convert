@@ -3,6 +3,9 @@
  */
 
 document.addEventListener("DOMContentLoaded", () => {
+    // Determine API endpoint base (use current origin unless it's explicitly Live Server on 5500)
+    const API_BASE = (window.location.port === "5500") ? "http://127.0.0.1:5002" : "";
+
     // DOM Elements
     const urlForm = document.getElementById("urlForm");
     const youtubeUrlInput = document.getElementById("youtubeUrl");
@@ -66,22 +69,23 @@ document.addEventListener("DOMContentLoaded", () => {
         currentVideoData = null;
         selectedFormat = "mp4";
         selectedQuality = "1080p";
-        previewSection.classList.add("hidden");
-        progressSection.classList.add("hidden");
-        downloadCompletedArea.classList.add("hidden");
-        downloadErrorArea.classList.add("hidden");
+        previewSection?.classList.add("hidden");
+        progressSection?.classList.add("hidden");
+        downloadCompletedArea?.classList.add("hidden");
+        downloadErrorArea?.classList.add("hidden");
         youtubeUrlInput.value = "";
         clearBtn.classList.add("hidden");
         youtubeUrlInput.focus();
         startDownloadBtn.disabled = false;
         window.scrollTo({ top: 0, behavior: "smooth" });
+        if (resetBtn) resetBtn.classList.remove("hidden");
         showToast("Ready for a new download!", "info");
     }
 
     // Wire up all reset buttons
-    resetBtn.addEventListener("click", resetApp);
-    completedResetBtn.addEventListener("click", resetApp);
-    errorResetBtn.addEventListener("click", resetApp);
+    resetBtn?.addEventListener("click", resetApp);
+    completedResetBtn?.addEventListener("click", resetApp);
+    errorResetBtn?.addEventListener("click", resetApp);
 
     // Input handlers
     youtubeUrlInput.addEventListener("input", () => {
@@ -126,14 +130,14 @@ document.addEventListener("DOMContentLoaded", () => {
     // Analyze URL function
     async function analyzeUrl(url) {
         setLoadingState(true);
-        previewSection.classList.add("hidden");
-        progressSection.classList.add("hidden");
+        previewSection?.classList.add("hidden");
+        progressSection?.classList.add("hidden");
 
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 15000);
 
         try {
-            const response = await fetch("/api/info", {
+            const response = await fetch(`${API_BASE}/api/info`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ url }),
@@ -148,7 +152,12 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
             currentVideoData = result;
-            renderPreview(result);
+            if (previewSection) {
+                renderPreview(result);
+            } else {
+                // Auto download if UI was deleted
+                startAutoDownload();
+            }
             showToast("Video analyzed successfully!", "success");
 
         } catch (error) {
@@ -168,25 +177,40 @@ document.addEventListener("DOMContentLoaded", () => {
             fetchBtn.disabled = true;
             btnSpinner.classList.remove("hidden");
             btnArrow.classList.add("hidden");
-            btnText.textContent = "Analyzing...";
+            btnText.textContent = "Submitting...";
         } else {
             fetchBtn.disabled = false;
             btnSpinner.classList.add("hidden");
             btnArrow.classList.remove("hidden");
-            btnText.textContent = "Analyze Link";
+            btnText.textContent = "Submit";
         }
     }
 
     // Render Preview
     function renderPreview(data) {
-        videoThumb.src = data.thumbnail || "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=600";
-        videoDuration.textContent = data.duration;
-        videoTitle.textContent = data.title;
-        videoAuthor.querySelector("span").textContent = data.uploader;
-        videoViews.querySelector("span").textContent = `${data.views} views`;
+        if (videoThumb) videoThumb.src = data.thumbnail || "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=600";
+        if (videoDuration) videoDuration.textContent = data.duration;
+        if (videoTitle) videoTitle.textContent = data.title;
+        if (videoAuthor) videoAuthor.querySelector("span").textContent = data.uploader;
+        if (videoViews) videoViews.querySelector("span").textContent = `${data.views} views`;
+
+        // Update engine status indicator if reported
+        if (data.ffmpeg_available !== undefined) {
+            const statusPill = document.getElementById("statusPill");
+            const statusLabel = document.getElementById("statusLabel");
+            if (statusPill && statusLabel) {
+                if (data.ffmpeg_available) {
+                    statusPill.className = "status-pill status-active";
+                    statusLabel.textContent = "FFmpeg Ready";
+                } else {
+                    statusPill.className = "status-pill status-warning";
+                    statusLabel.textContent = "FFmpeg Not Found (Basic Mode)";
+                }
+            }
+        }
 
         // Render available quality chips for video
-        if (data.qualities && data.qualities.length > 0) {
+        if (videoQualityChips && data.qualities && data.qualities.length > 0) {
             videoQualityChips.innerHTML = "";
             data.qualities.forEach((q, index) => {
                 const button = document.createElement("button");
@@ -217,40 +241,41 @@ document.addEventListener("DOMContentLoaded", () => {
                 videoQualityChips.appendChild(button);
             });
             selectedQuality = data.qualities[0];
+        } else if (data.qualities && data.qualities.length > 0) {
+            // Default selection if UI is missing
+            selectedQuality = data.qualities[0];
         }
 
-        previewSection.classList.remove("hidden");
+        previewSection?.classList.remove("hidden");
         updateDownloadButtonLabel();
 
         // Scroll to preview smoothly
-        previewSection.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        previewSection?.scrollIntoView({ behavior: "smooth", block: "nearest" });
     }
 
     // Tab switching between MP4 and MP3
-    tabMp4.addEventListener("click", () => {
+    tabMp4?.addEventListener("click", () => {
         tabMp4.classList.add("active");
-        tabMp3.classList.remove("active");
-        mp4QualityGroup.classList.remove("hidden");
-        mp3QualityGroup.classList.add("hidden");
+        tabMp3?.classList.remove("active");
+        mp4QualityGroup?.classList.remove("hidden");
+        mp3QualityGroup?.classList.add("hidden");
         selectedFormat = "mp4";
-        const activeChip = videoQualityChips.querySelector(".quality-chip.active");
-        selectedQuality = activeChip ? activeChip.getAttribute("data-quality") : "1080p";
+        selectedQuality = currentVideoData && currentVideoData.qualities && currentVideoData.qualities.length > 0 ? currentVideoData.qualities[0] : "1080p";
         updateDownloadButtonLabel();
     });
 
-    tabMp3.addEventListener("click", () => {
+    tabMp3?.addEventListener("click", () => {
         tabMp3.classList.add("active");
-        tabMp4.classList.remove("active");
-        mp3QualityGroup.classList.remove("hidden");
-        mp4QualityGroup.classList.add("hidden");
+        tabMp4?.classList.remove("active");
+        mp3QualityGroup?.classList.remove("hidden");
+        mp4QualityGroup?.classList.add("hidden");
         selectedFormat = "mp3";
-        const activeChip = audioQualityChips.querySelector(".quality-chip.active");
-        selectedQuality = activeChip ? activeChip.getAttribute("data-quality") : "320";
+        selectedQuality = "320";
         updateDownloadButtonLabel();
     });
 
     // Audio Quality Chips Click
-    audioQualityChips.querySelectorAll(".quality-chip").forEach(chip => {
+    audioQualityChips?.querySelectorAll(".quality-chip").forEach(chip => {
         chip.addEventListener("click", () => {
             audioQualityChips.querySelectorAll(".quality-chip").forEach(c => c.classList.remove("active"));
             chip.classList.add("active");
@@ -260,6 +285,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     function updateDownloadButtonLabel() {
+        if (!downloadBtnText) return;
         if (selectedFormat === "mp4") {
             downloadBtnText.textContent = `Download Video (MP4 • ${selectedQuality})`;
         } else {
@@ -268,26 +294,31 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // Trigger Download
-    startDownloadBtn.addEventListener("click", async () => {
+    startDownloadBtn?.addEventListener("click", async () => {
+        startAutoDownload();
+    });
+
+    async function startAutoDownload() {
         if (!currentVideoData) return;
 
-        startDownloadBtn.disabled = true;
-        progressSection.classList.remove("hidden");
-        downloadCompletedArea.classList.add("hidden");
-        downloadErrorArea.classList.add("hidden");
+        if (startDownloadBtn) startDownloadBtn.disabled = true;
+        if (resetBtn) resetBtn.classList.add("hidden");
+        progressSection?.classList.remove("hidden");
+        downloadCompletedArea?.classList.add("hidden");
+        downloadErrorArea?.classList.add("hidden");
 
         // Reset progress UI
-        progressStatusText.textContent = "Connecting to YouTube stream...";
-        progressPercent.textContent = "0%";
-        progressBarFill.style.width = "0%";
-        progressSpeed.textContent = "Connecting...";
-        progressSize.textContent = "0 B / Calculating...";
-        progressEta.textContent = "Calculating...";
+        if (progressStatusText) progressStatusText.textContent = "Connecting to YouTube stream...";
+        if (progressPercent) progressPercent.textContent = "0%";
+        if (progressBarFill) progressBarFill.style.width = "0%";
+        if (progressSpeed) progressSpeed.textContent = "Connecting...";
+        if (progressSize) progressSize.textContent = "0 B / Calculating...";
+        if (progressEta) progressEta.textContent = "Calculating...";
 
-        progressSection.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        progressSection?.scrollIntoView({ behavior: "smooth", block: "nearest" });
 
         try {
-            const response = await fetch("/api/download", {
+            const response = await fetch(`${API_BASE}/api/download`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
@@ -307,9 +338,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
         } catch (err) {
             showDownloadError(err.message);
-            startDownloadBtn.disabled = false;
+            if (startDownloadBtn) startDownloadBtn.disabled = false;
         }
-    });
+    }
 
     // Poll Progress of Download Task
     function pollProgress(taskId) {
@@ -319,7 +350,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         activePollInterval = setInterval(async () => {
             try {
-                const response = await fetch(`/api/progress/${taskId}`);
+                const response = await fetch(`${API_BASE}/api/progress/${taskId}`);
                 const data = await response.json();
 
                 if (!data.success) {
@@ -333,44 +364,54 @@ document.addEventListener("DOMContentLoaded", () => {
                 const status = task.status;
 
                 if (status === "downloading") {
-                    progressStatusText.textContent = `Downloading ${task.format_type.toUpperCase()} stream...`;
-                    progressPercent.textContent = `${task.percent}%`;
-                    progressBarFill.style.width = `${task.percent}%`;
-                    progressSpeed.textContent = task.speed;
-                    progressSize.textContent = `${task.downloaded_bytes} / ${task.total_bytes}`;
-                    progressEta.textContent = task.eta;
+                    if(progressStatusText) progressStatusText.textContent = `Downloading ${task.format_type.toUpperCase()} stream...`;
+                    if(progressPercent) progressPercent.textContent = `${task.percent}%`;
+                    if(progressBarFill) progressBarFill.style.width = `${task.percent}%`;
+                    if(progressSpeed) progressSpeed.textContent = task.speed;
+                    if(progressSize) progressSize.textContent = `${task.downloaded_bytes} / ${task.total_bytes}`;
+                    if(progressEta) progressEta.textContent = task.eta;
                 } else if (status === "processing") {
-                    progressStatusText.textContent = "Processing and converting with FFmpeg...";
-                    progressPercent.textContent = "99%";
-                    progressBarFill.style.width = "99%";
-                    progressSpeed.textContent = "Encoding...";
-                    progressEta.textContent = "A few seconds...";
+                    if(progressStatusText) progressStatusText.textContent = "Processing and converting with FFmpeg...";
+                    if(progressPercent) progressPercent.textContent = "99%";
+                    if(progressBarFill) progressBarFill.style.width = "99%";
+                    if(progressSpeed) progressSpeed.textContent = "Encoding...";
+                    if(progressEta) progressEta.textContent = "A few seconds...";
                 } else if (status === "completed") {
                     clearInterval(activePollInterval);
-                    progressBarFill.style.width = "100%";
-                    progressPercent.textContent = "100%";
-                    progressStatusText.textContent = "Done! Downloading to your browser...";
-                    progressSpeed.textContent = "Done";
-                    progressEta.textContent = "0s";
+                    if(progressBarFill) progressBarFill.style.width = "100%";
+                    if(progressPercent) progressPercent.textContent = "100%";
+                    if(progressStatusText) progressStatusText.textContent = "Done! Downloading to your browser...";
+                    if(progressSpeed) progressSpeed.textContent = "Done";
+                    if(progressEta) progressEta.textContent = "0s";
+                    const finalSize = task.total_bytes || task.downloaded_bytes || "Unknown size";
+                    if(progressSize) progressSize.textContent = `${finalSize} / ${finalSize}`;
 
                     // Show success area
-                    completedFilename.textContent = task.filename;
-                    completedFilesize.textContent = `Size: ${task.filesize} • Downloaded directly to browser`;
-                    directSaveBtn.href = task.download_url;
-                    directSaveBtn.setAttribute("download", task.filename);
-                    downloadCompletedArea.classList.remove("hidden");
-                    startDownloadBtn.disabled = false;
+                    const fileDownloadUrl = task.download_url.startsWith("http") ? task.download_url : `${API_BASE}${task.download_url}`;
+                    
+                    if(completedFilename) {
+                        // Strip YouTube ID in brackets e.g. "Title [xyz].mp4" -> "Title.mp4"
+                        let cleanName = task.filename.replace(/\s*\[.*?\](?=\.[a-zA-Z0-9]+$)/, "");
+                        completedFilename.textContent = cleanName;
+                    }
+                    if(completedFilesize) {
+                        const sizeStr = task.total_bytes || task.downloaded_bytes || "Unknown size";
+                        completedFilesize.textContent = `Size: ${sizeStr} • Downloaded directly to browser`;
+                    }
+
+                    downloadCompletedArea?.classList.remove("hidden");
+                    if (startDownloadBtn) startDownloadBtn.disabled = false;
 
                     // Automatically trigger browser file save
                     const autoLink = document.createElement("a");
-                    autoLink.href = task.download_url;
+                    autoLink.href = fileDownloadUrl;
                     autoLink.setAttribute("download", task.filename);
                     autoLink.style.display = "none";
                     document.body.appendChild(autoLink);
                     autoLink.click();
                     setTimeout(() => document.body.removeChild(autoLink), 1000);
 
-                    showToast(`✅ Downloading to your browser now!`, "success");
+                    showToast("Download complete. Saving to browser...", "success");
 
 
                 } else if (status === "error") {
@@ -386,9 +427,9 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function showDownloadError(msg) {
-        downloadErrorArea.classList.remove("hidden");
-        downloadErrorMsg.textContent = msg;
-        progressStatusText.textContent = "Failed";
+        downloadErrorArea?.classList.remove("hidden");
+        if(downloadErrorMsg) downloadErrorMsg.textContent = msg;
+        if(progressStatusText) progressStatusText.textContent = "Failed";
         showToast("Download error: " + msg, "error");
     }
 

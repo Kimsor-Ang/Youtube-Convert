@@ -3,20 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>StreamVault - Free YouTube to MP4 & MP3 Downloader</title>
-    <meta name="description" content="Download YouTube videos and audio in high definition MP4 and pristine MP3 for free. Fast, unlimited, and runs locally.">
-    <!-- Google Fonts -->
+    <title>YouTube Downloader</title>
+    <meta name="description" content="Download YouTube videos and audio in MP4 and MP3 format. Fast, private, and runs locally.">
+    <!-- Clean Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/static/css/style.css">
 </head>
 <body>
-    <!-- Ambient Background Glows -->
-    <div class="bg-glow glow-1"></div>
-    <div class="bg-glow glow-2"></div>
-    <div class="bg-glow glow-3"></div>
-
     <div class="app-layout">
         <!-- Navigation Header -->
         <header class="navbar">
@@ -24,29 +19,14 @@
                 <a href="/" class="brand-logo">
                     <div class="logo-icon-wrapper">
                         <svg class="logo-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M12 2C6.477 2 2 6.477 2 12C2 17.523 6.477 22 12 22C17.523 22 22 17.523 22 12C22 6.477 17.523 2 12 2Z" fill="url(#logo-gradient)"/>
-                            <path d="M10 8.5L16 12L10 15.5V8.5Z" fill="white"/>
-                            <defs>
-                                <linearGradient id="logo-gradient" x1="2" y1="2" x2="22" y2="22" gradientUnits="userSpaceOnUse">
-                                    <stop stop-color="#FF0055"/>
-                                    <stop offset="0.5" stop-color="#7928CA"/>
-                                    <stop offset="1" stop-color="#0070F3"/>
-                                </linearGradient>
-                            </defs>
+                            <rect x="2" y="4" width="20" height="16" rx="4.5" fill="#EF4444"/>
+                            <polygon points="10,8.5 16,12 10,15.5" fill="white"/>
                         </svg>
                     </div>
                     <div class="brand-text">
-                        <span class="brand-title">Stream<span class="gradient-text">Vault</span></span>
-                        <span class="brand-badge">PRO</span>
+                        <span class="brand-title">YouTube<span class="brand-sub">Downloader</span></span>
                     </div>
                 </a>
-
-                <div class="nav-actions">
-                    <div class="status-pill {% if ffmpeg_available %}status-active{% else %}status-warning{% endif %}" title="FFmpeg handles audio conversion & video merging">
-                        <span class="status-dot"></span>
-                        <span class="status-label">{% if ffmpeg_available %}FFmpeg Engine Ready{% else %}FFmpeg Not Found (Basic Mode){% endif %}</span>
-                    </div>
-                </div>
             </div>
         </header>
 
@@ -54,21 +34,16 @@
         <main class="main-container">
             <!-- Hero Header -->
             <section class="hero-section">
-                <div class="hero-tag">
-                    <span class="hero-tag-pulse"></span>
-                    <span>100% Free & Unlimited Fast Downloads</span>
-                </div>
-                <h1 class="hero-title">Download YouTube in <span class="gradient-text">MP4 & MP3</span></h1>
-                <p class="hero-subtitle">Paste any YouTube video or Shorts link below to fetch and download in up to 1080p HD video or studio-quality 320kbps audio.</p>
+                <h1 class="hero-title">Download YouTube in <span class="highlight-text">MP4 & MP3</span></h1>
             </section>
 
             <!-- URL Input Form Section -->
             <section class="search-section">
-                <div class="search-card glass-panel">
+                <div class="search-card">
                     <form id="urlForm" class="search-form">
                         <div class="input-wrapper">
                             <div class="input-icon">
-                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                     <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
                                     <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
                                 </svg>
@@ -81,157 +56,79 @@
                                 autocomplete="off"
                                 required
                             >
-                            <button type="button" id="pasteBtn" class="btn-icon" title="Paste from Clipboard">
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <button type="button" id="pasteBtn" class="btn-paste" title="Paste from Clipboard">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                     <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
                                     <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
                                 </svg>
                                 <span>Paste</span>
                             </button>
-                            <button type="button" id="clearBtn" class="btn-icon btn-clear hidden" title="Clear text">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <button type="button" id="clearBtn" class="btn-clear hidden" title="Clear text">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                     <line x1="18" y1="6" x2="6" y2="18"></line>
                                     <line x1="6" y1="6" x2="18" y2="18"></line>
                                 </svg>
                             </button>
                         </div>
                         <button type="submit" id="fetchBtn" class="btn-primary">
-                            <span class="btn-text">Analyze Link</span>
+                            <span class="btn-text">Submit</span>
                             <span class="btn-spinner hidden">
                                 <span class="spinner"></span>
                             </span>
-                            <svg class="btn-arrow" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <svg class="btn-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                                 <line x1="5" y1="12" x2="19" y2="12"></line>
                                 <polyline points="12 5 19 12 12 19"></polyline>
                             </svg>
                         </button>
                     </form>
-
-                    <!-- Quick Format Pills -->
-                    <div class="features-bar">
-                        <div class="feature-item">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
-                            <span>MP4 Video HD</span>
-                        </div>
-                        <div class="feature-item">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>
-                            <span>MP3 320kbps</span>
-                        </div>
-                        <div class="feature-item">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ec4899" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
-                            <span>Shorts & Videos</span>
-                        </div>
-                        <div class="feature-item">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#a855f7" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
-                            <span>Local & Safe</span>
-                        </div>
-                    </div>
+                    <p style="color: #9ca3af; font-size: 0.9rem; text-align: center; margin-top: 1rem; font-weight: 400;">just paste a link and click analyze to start downloading.</p>
                 </div>
             </section>
 
-            <!-- Video Preview & Download Options Card (Hidden until link analyzed) -->
+            <!-- Video Preview Card -->
             <section id="previewSection" class="preview-section hidden">
-                <div class="preview-card glass-panel">
-                    <div class="preview-grid">
-                        <!-- Thumbnail & Basic Info -->
-                        <div class="preview-media">
-                            <div class="thumbnail-wrapper">
-                                <img id="videoThumb" src="" alt="Video Thumbnail" class="thumbnail-img">
-                                <span id="videoDuration" class="duration-badge">0:00</span>
-                                <div class="play-overlay">
-                                    <svg width="32" height="32" viewBox="0 0 24 24" fill="white">
-                                        <polygon points="5 3 19 12 5 21 5 3"></polygon>
-                                    </svg>
-                                </div>
-                            </div>
-                            <div class="video-meta">
-                                <h2 id="videoTitle" class="video-title">Video Title</h2>
-                                <div class="video-submeta">
-                                    <span id="videoAuthor" class="author-name">
-                                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-                                        <span>Channel</span>
-                                    </span>
-                                    <span class="meta-dot">•</span>
-                                    <span id="videoViews" class="views-count">
-                                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
-                                        <span>0 views</span>
-                                    </span>
-                                </div>
-                            </div>
+                <div class="preview-card" style="padding: 1.5rem;">
+                    <!-- Reset Button Container -->
+                    <div id="previewResetContainer" style="display: flex; justify-content: flex-end; margin-bottom: 1rem;">
+                        <button type="button" id="resetBtn" class="btn-secondary" style="font-size: 0.85rem; padding: 0.4rem 0.8rem;">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 .49-3.37"></path></svg>
+                            <span>Try Another Link</span>
+                        </button>
+                    </div>
+
+                    <div style="display: flex; flex-direction: row; gap: 2rem; align-items: flex-start; flex-wrap: wrap;">
+                        <!-- Thumbnail (Left, Smaller) -->
+                        <div class="video-thumbnail" style="flex: 0 0 280px; min-width: 200px; border-radius: 12px; overflow: hidden; position: relative;">
+                            <img id="videoThumb" src="" alt="Video Thumbnail" style="width: 100%; display: block; object-fit: cover;">
+                            <span id="videoDuration" class="duration-badge">0:00</span>
                         </div>
-
-                        <!-- Format & Quality Options Form -->
-                        <div class="options-container">
-                            <!-- Format Type Toggle -->
-                            <div class="format-toggle-group">
-                                <label class="section-label">Select Download Format</label>
-                                <div class="toggle-tabs">
-                                    <button type="button" class="tab-btn active" data-format="mp4" id="tabMp4">
-                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect><line x1="7" y1="2" x2="7" y2="22"></line><line x1="17" y1="2" x2="17" y2="22"></line><line x1="2" y1="12" x2="22" y2="12"></line><line x1="2" y1="7" x2="7" y2="7"></line><line x1="2" y1="17" x2="7" y2="17"></line><line x1="17" y1="17" x2="22" y2="17"></line><line x1="17" y1="7" x2="22" y2="7"></line></svg>
-                                        <span>Video (MP4)</span>
-                                    </button>
-                                    <button type="button" class="tab-btn" data-format="mp3" id="tabMp3">
-                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>
-                                        <span>Audio (MP3)</span>
-                                    </button>
-                                </div>
+                        
+                        <!-- Content & Options (Right) -->
+                        <div class="video-details" style="flex: 1; min-width: 300px;">
+                            <h2 id="videoTitle" class="video-title" style="font-size: 1.25rem; margin-bottom: 0.5rem;">Video Title</h2>
+                            <div class="video-meta" style="margin-bottom: 1.5rem;">
+                                <span id="videoAuthor" class="meta-item">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                                    <span>Author</span>
+                                </span>
+                                <span id="videoViews" class="meta-item">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                                    <span>0 views</span>
+                                </span>
                             </div>
 
-                            <!-- Quality Options for MP4 -->
-                            <div id="mp4QualityGroup" class="quality-group">
-                                <label class="section-label">Select Video Resolution</label>
-                                <div class="chip-container" id="videoQualityChips">
-                                    <button type="button" class="quality-chip active" data-quality="1080p">
-                                        <span class="chip-title">1080p</span>
-                                        <span class="chip-desc">Full HD</span>
-                                    </button>
-                                    <button type="button" class="quality-chip" data-quality="720p">
-                                        <span class="chip-title">720p</span>
-                                        <span class="chip-desc">HD</span>
-                                    </button>
-                                    <button type="button" class="quality-chip" data-quality="480p">
-                                        <span class="chip-title">480p</span>
-                                        <span class="chip-desc">Standard</span>
-                                    </button>
-                                    <button type="button" class="quality-chip" data-quality="360p">
-                                        <span class="chip-title">360p</span>
-                                        <span class="chip-desc">Compact</span>
-                                    </button>
+                            <!-- Format Options -->
+                            <div class="options-container" style="background: rgba(255,255,255,0.03); padding: 1rem; border-radius: 12px; margin-bottom: 1.5rem;">
+                                <div class="format-tabs">
+                                    <button type="button" id="tabMp4" class="format-tab active">Video (MP4)</button>
+                                    <button type="button" id="tabMp3" class="format-tab">Audio (MP3)</button>
                                 </div>
                             </div>
-
-                            <!-- Quality Options for MP3 -->
-                            <div id="mp3QualityGroup" class="quality-group hidden">
-                                <label class="section-label">Select Audio Bitrate</label>
-                                <div class="chip-container" id="audioQualityChips">
-                                    <button type="button" class="quality-chip active" data-quality="320">
-                                        <span class="chip-title">320 kbps</span>
-                                        <span class="chip-desc">Ultra Quality</span>
-                                    </button>
-                                    <button type="button" class="quality-chip" data-quality="256">
-                                        <span class="chip-title">256 kbps</span>
-                                        <span class="chip-desc">High Quality</span>
-                                    </button>
-                                    <button type="button" class="quality-chip" data-quality="192">
-                                        <span class="chip-title">192 kbps</span>
-                                        <span class="chip-desc">Standard</span>
-                                    </button>
-                                    <button type="button" class="quality-chip" data-quality="128">
-                                        <span class="chip-title">128 kbps</span>
-                                        <span class="chip-desc">Compact</span>
-                                    </button>
-                                </div>
-                            </div>
-
-                            <!-- Download Action Trigger -->
-                            <div class="action-footer">
-                                <button type="button" id="startDownloadBtn" class="btn-download-action">
-                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                                    <span id="downloadBtnText">Start Download (MP4)</span>
-                                </button>
-                                <button type="button" id="resetBtn" class="btn-reset" title="Clear and download a new video">
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 .49-3.37"></path></svg>
-                                    <span>New Link</span>
+                            
+                            <div class="simple-download-action">
+                                <button type="button" id="startDownloadBtn" class="btn-primary" style="width: 100%;">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                                    <span id="downloadBtnText">Download Video</span>
                                 </button>
                             </div>
                         </div>
@@ -241,7 +138,7 @@
 
             <!-- Active Download Progress Card -->
             <section id="progressSection" class="progress-section hidden">
-                <div class="progress-card glass-panel">
+                <div class="progress-card">
                     <div class="progress-header">
                         <div class="progress-status-info">
                             <span class="live-pulse"></span>
@@ -250,11 +147,9 @@
                         <span id="progressPercent" class="progress-percent-val">0%</span>
                     </div>
 
-                    <!-- Animated Progress Bar -->
+                    <!-- Progress Bar -->
                     <div class="progress-bar-track">
-                        <div id="progressBarFill" class="progress-bar-fill" style="width: 0%;">
-                            <div class="progress-bar-shimmer"></div>
-                        </div>
+                        <div id="progressBarFill" class="progress-bar-fill" style="width: 0%;"></div>
                     </div>
 
                     <!-- Progress Statistics Bar -->
@@ -274,24 +169,11 @@
                     </div>
 
                     <!-- Completed Download Success Area -->
-                    <div id="downloadCompletedArea" class="completed-area hidden">
-                        <div class="success-message">
-                            <div class="success-icon">
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                            </div>
-                            <div class="success-text">
-                                <h3 id="completedFilename" class="filename-title">Downloaded successfully!</h3>
-                                <p id="completedFilesize" class="filesize-sub">Downloading directly to your browser...</p>
-                            </div>
-                        </div>
-                        <div class="completed-actions">
-                            <a id="directSaveBtn" href="#" class="btn-success" download>
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                                <span>Download Again</span>
-                            </a>
-                            <button type="button" id="completedResetBtn" class="btn-secondary">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 .49-3.37"></path></svg>
-                                <span>Download New Video</span>
+                    <div id="downloadCompletedArea" class="completed-area hidden" style="display: flex; flex-direction: column; align-items: center; text-align: center; padding: 2.5rem 1rem; background: rgba(16, 185, 129, 0.05); border-radius: 12px; margin-top: 1.5rem; border: 1px solid rgba(16, 185, 129, 0.2);">
+                        <div class="completed-actions" style="display: flex; gap: 1rem; width: 100%; justify-content: center; flex-wrap: wrap;">
+                            <button type="button" id="completedResetBtn" class="btn-primary" style="flex: 1; max-width: 200px; justify-content: center; padding: 0.8rem 1.5rem; font-size: 1rem;">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 .49-3.37"></path></svg>
+                                <span>Reset</span>
                             </button>
                         </div>
                     </div>
@@ -299,25 +181,24 @@
                     <!-- Error State Box -->
                     <div id="downloadErrorArea" class="error-area hidden">
                         <div class="error-banner">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
                             <span id="downloadErrorMsg">Download failed.</span>
                         </div>
                         <div class="error-actions">
-                            <button type="button" id="errorResetBtn" class="btn-secondary" style="margin-top:0.75rem;">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 .49-3.37"></path></svg>
+                            <button type="button" id="errorResetBtn" class="btn-secondary">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 .49-3.37"></path></svg>
                                 <span>Try Another Link</span>
                             </button>
                         </div>
                     </div>
                 </div>
             </section>
-
         </main>
 
         <!-- Footer -->
         <footer class="footer">
             <div class="footer-container">
-                <p>StreamVault YouTube Downloader • Running locally on your computer with Python 3.12 & yt-dlp</p>
+                <p>YouTube Downloader • Local processing with Python 3.12 & yt-dlp</p>
                 <div class="footer-links">
                     <span>Clean & Ad-Free</span>
                     <span>•</span>
