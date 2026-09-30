@@ -265,8 +265,10 @@ def run_download_task(task_id, raw_url, format_type, quality):
                 "preferredquality": quality if quality in ["128", "192", "256", "320"] else "192",
             }]
         else:
-            # No FFmpeg: force audio-only streams using simple bestaudio selector
-            ydl_opts["format"] = "bestaudio"
+            # No FFmpeg: use web client which always provides audio-only streams
+            # bestaudio/best with web client ensures we get audio-only (m4a/webm)
+            ydl_opts["extractor_args"] = {"youtube": {"player_client": ["web"]}}
+            ydl_opts["format"] = "bestaudio[ext=m4a]/bestaudio[ext=webm]/bestaudio/best"
     else:
         height_val = quality.replace("p", "") if quality and quality.endswith("p") else None
         if ffmpeg_path:
