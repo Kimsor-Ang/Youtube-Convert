@@ -265,10 +265,7 @@ def run_download_task(task_id, raw_url, format_type, quality):
                 meta = meta['entries'][0]
 
             expected_ext = "mp3" if format_type == "mp3" and FFMPEG_PATH else "mp4"
-            video_id = meta.get("id", "")
-            matches = list(Path(tmp_dir).glob(f"*{video_id}*.{expected_ext}"))
-            if not matches:
-                matches = list(Path(tmp_dir).glob(f"*{video_id}*.*"))
+            matches = list(Path(tmp_dir).glob(f"*.{expected_ext}"))
             if not matches:
                 matches = list(Path(tmp_dir).glob("*.*"))
 
