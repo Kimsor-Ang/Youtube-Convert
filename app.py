@@ -42,14 +42,6 @@ def handle_preflight():
 
 # Find FFmpeg binary
 def find_ffmpeg():
-    try:
-        import imageio_ffmpeg
-        exe = imageio_ffmpeg.get_ffmpeg_exe()
-        if exe and os.path.exists(exe):
-            return exe
-    except ImportError:
-        pass
-
     which_ffmpeg = shutil.which("ffmpeg")
     if which_ffmpeg:
         return which_ffmpeg
