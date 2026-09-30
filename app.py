@@ -134,8 +134,8 @@ def clean_error(err_str):
         return "This video is unavailable, deleted, or private on YouTube. Try another link."
     if "sign in to confirm" in el or "not a bot" in el or "429" in el:
         return "YouTube is blocking this request. Try a different video or try again in a moment."
-    if "requested format is not available" in el:
-        return "That resolution is not available. Try 720p or 480p."
+    if "requested format is not available" in el or "format is not available" in el:
+        return "The requested format is not available for this video. Please try a different quality or format."
     if "timed out" in el:
         return "Request timed out. Check your internet and try again."
     if "ERROR:" in err_str:
@@ -256,8 +256,8 @@ def run_download_task(task_id, raw_url, format_type, quality):
                 "preferredquality": quality if quality in ["128", "192", "256", "320"] else "192",
             }]
         else:
-            # No FFmpeg: force audio-only streams, never pick a combined video+audio stream
-            ydl_opts["format"] = "bestaudio[ext=m4a]/bestaudio[ext=webm]/bestaudio[acodec!=none]"
+            # No FFmpeg: force audio-only streams using simple bestaudio selector
+            ydl_opts["format"] = "bestaudio"
     else:
         height_val = quality.replace("p", "") if quality and quality.endswith("p") else None
         if ffmpeg_path:
