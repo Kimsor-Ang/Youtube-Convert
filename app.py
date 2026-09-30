@@ -104,6 +104,7 @@ def get_base_ydl_opts():
         "socket_timeout": 30,
         "retries": 5,
         "fragment_retries": 5,
+        "no_check_formats": True,
         "extractor_args": {
             "youtube": {
                 "player_client": ["android", "ios", "web"]
