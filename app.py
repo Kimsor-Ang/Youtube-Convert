@@ -45,6 +45,11 @@ def find_ffmpeg():
     which_ffmpeg = shutil.which("ffmpeg")
     if which_ffmpeg:
         return which_ffmpeg
+    # Linux paths (Railway, Render, etc.)
+    for linux_path in ["/usr/bin/ffmpeg", "/usr/local/bin/ffmpeg", "/bin/ffmpeg"]:
+        if os.path.exists(linux_path):
+            return linux_path
+    # Windows WinGet
     local_app_data = os.environ.get("LOCALAPPDATA", "")
     if local_app_data:
         winget_pattern = os.path.join(
@@ -67,6 +72,9 @@ def get_ffmpeg_info():
     path = find_ffmpeg()
     return path, (os.path.dirname(path) if path else None)
 
+# Always log FFmpeg status on startup (visible in Railway/Gunicorn logs too)
+_startup_ffmpeg, _ = get_ffmpeg_info()
+print(f"[STARTUP] FFmpeg: {'FOUND -> ' + _startup_ffmpeg if _startup_ffmpeg else 'NOT FOUND - MP3 will use audio-only fallback without conversion'}", flush=True)
 
 # Task store: task_id -> {status, percent, speed, eta, file_path, filename, error, tmp_dir}
 tasks = {}
@@ -315,9 +323,11 @@ def run_download_task(task_id, raw_url, format_type, quality):
                 raise Exception("Could not locate the downloaded file.")
     except Exception as e:
         shutil.rmtree(tmp_dir, ignore_errors=True)
+        raw_err = str(e)
+        print(f"[DOWNLOAD ERROR] format_type={format_type}, ffmpeg={ffmpeg_path}, error={raw_err}")
         with tasks_lock:
             tasks[task_id]["status"] = "error"
-            tasks[task_id]["error"] = clean_error(str(e))
+            tasks[task_id]["error"] = clean_error(raw_err)
 
 @app.route("/api/download", methods=["POST"])
 def start_download():
