@@ -248,6 +248,7 @@ def run_download_task(task_id, raw_url, format_type, quality):
 
     if format_type == "mp3":
         if ffmpeg_path:
+            # FFmpeg available: download best audio and convert to mp3
             ydl_opts["format"] = "bestaudio/best"
             ydl_opts["postprocessors"] = [{
                 "key": "FFmpegExtractAudio",
@@ -255,7 +256,8 @@ def run_download_task(task_id, raw_url, format_type, quality):
                 "preferredquality": quality if quality in ["128", "192", "256", "320"] else "192",
             }]
         else:
-            ydl_opts["format"] = "bestaudio[ext=m4a]/bestaudio/best"
+            # No FFmpeg: force audio-only streams, never pick a combined video+audio stream
+            ydl_opts["format"] = "bestaudio[ext=m4a]/bestaudio[ext=webm]/bestaudio[acodec!=none]"
     else:
         height_val = quality.replace("p", "") if quality and quality.endswith("p") else None
         if ffmpeg_path:
@@ -271,8 +273,17 @@ def run_download_task(task_id, raw_url, format_type, quality):
             if 'entries' in meta:
                 meta = meta['entries'][0]
 
-            expected_ext = "mp3" if format_type == "mp3" and ffmpeg_path else ("m4a" if format_type == "mp3" else "mp4")
-            matches = list(Path(tmp_dir).glob(f"*.{expected_ext}"))
+            if format_type == "mp3" and ffmpeg_path:
+                expected_ext = "mp3"
+            elif format_type == "mp3":
+                expected_ext = None  # any file is audio-only since we forced bestaudio
+            else:
+                expected_ext = "mp4"
+
+            if expected_ext:
+                matches = list(Path(tmp_dir).glob(f"*.{expected_ext}"))
+            else:
+                matches = list(Path(tmp_dir).glob("*.*"))
             if not matches:
                 matches = list(Path(tmp_dir).glob("*.*"))
 
