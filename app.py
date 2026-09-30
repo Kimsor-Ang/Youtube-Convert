@@ -97,11 +97,10 @@ def get_base_ydl_opts():
         "retries": 2,
         "fragment_retries": 2,
         "extractor_args": {
-            "youtube": {"player_client": ["ios", "android"]}
-        },
-        "http_headers": {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/126.0.0.0 Safari/537.36",
-            "Accept-Language": "en-US,en;q=0.9",
+            "youtube": {
+                "player_client": ["android", "ios", "web"],
+                "player_skip": ["webpage", "configs"]
+            }
         }
     }
     path, ffmpeg_dir = get_ffmpeg_info()
