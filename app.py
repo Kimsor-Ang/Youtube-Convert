@@ -92,7 +92,7 @@ def get_base_ydl_opts():
         "retries": 2,
         "fragment_retries": 2,
         "extractor_args": {
-            "youtube": {"player_client": ["android", "web"]}
+            "youtube": {"player_client": ["ios", "android"]}
         },
         "http_headers": {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/126.0.0.0 Safari/537.36",
