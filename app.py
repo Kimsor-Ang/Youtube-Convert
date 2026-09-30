@@ -63,6 +63,11 @@ FFMPEG_DIR = os.path.dirname(FFMPEG_PATH) if FFMPEG_PATH else None
 if FFMPEG_DIR and FFMPEG_DIR not in os.environ.get("PATH", ""):
     os.environ["PATH"] = FFMPEG_DIR + os.pathsep + os.environ.get("PATH", "")
 
+def get_ffmpeg_info():
+    path = find_ffmpeg()
+    return path, (os.path.dirname(path) if path else None)
+
+
 # Task store: task_id -> {status, percent, speed, eta, file_path, filename, error, tmp_dir}
 tasks = {}
 tasks_lock = threading.Lock()
@@ -99,8 +104,9 @@ def get_base_ydl_opts():
             "Accept-Language": "en-US,en;q=0.9",
         }
     }
-    if FFMPEG_DIR:
-        opts["ffmpeg_location"] = FFMPEG_DIR
+    path, ffmpeg_dir = get_ffmpeg_info()
+    if ffmpeg_dir:
+        opts["ffmpeg_location"] = ffmpeg_dir
     cookies_file = BASE_DIR / "cookies.txt"
     if cookies_file.exists():
         opts["cookiefile"] = str(cookies_file)
@@ -140,7 +146,8 @@ def clean_error(err_str):
 
 @app.route("/")
 def index():
-    return render_template("index.html", ffmpeg_available=bool(FFMPEG_PATH))
+    path, _ = get_ffmpeg_info()
+    return render_template("index.html", ffmpeg_available=bool(path))
 
 @app.route("/favicon.ico")
 def favicon():
@@ -194,7 +201,7 @@ def get_info():
                 "thumbnail": thumbnail,
                 "url": url,
                 "qualities": detected_qualities,
-                "ffmpeg_available": bool(FFMPEG_PATH)
+                "ffmpeg_available": bool(get_ffmpeg_info()[0])
             })
     except Exception as e:
         return jsonify({"success": False, "error": clean_error(str(e))}), 400
@@ -239,8 +246,10 @@ def run_download_task(task_id, raw_url, format_type, quality):
     ydl_opts["outtmpl"] = out_tmpl
     ydl_opts["progress_hooks"] = [progress_hook]
 
+    ffmpeg_path, _ = get_ffmpeg_info()
+
     if format_type == "mp3":
-        if FFMPEG_PATH:
+        if ffmpeg_path:
             ydl_opts["format"] = "bestaudio/best"
             ydl_opts["postprocessors"] = [{
                 "key": "FFmpegExtractAudio",
@@ -251,7 +260,7 @@ def run_download_task(task_id, raw_url, format_type, quality):
             ydl_opts["format"] = "bestaudio[ext=m4a]/bestaudio/best"
     else:
         height_val = quality.replace("p", "") if quality and quality.endswith("p") else None
-        if FFMPEG_PATH:
+        if ffmpeg_path:
             fmt = f"bestvideo[height<={height_val}][ext=mp4]+bestaudio[ext=m4a]/bestvideo[height<={height_val}]+bestaudio/best" if height_val else "bestvideo[ext=mp4]+bestaudio[ext=m4a]/bestvideo+bestaudio/best[ext=mp4]/best"
             ydl_opts["format"] = fmt
             ydl_opts["merge_output_format"] = "mp4"
@@ -264,7 +273,7 @@ def run_download_task(task_id, raw_url, format_type, quality):
             if 'entries' in meta:
                 meta = meta['entries'][0]
 
-            expected_ext = "mp3" if format_type == "mp3" and FFMPEG_PATH else "mp4"
+            expected_ext = "mp3" if format_type == "mp3" and ffmpeg_path else ("m4a" if format_type == "mp3" else "mp4")
             matches = list(Path(tmp_dir).glob(f"*.{expected_ext}"))
             if not matches:
                 matches = list(Path(tmp_dir).glob("*.*"))
@@ -364,7 +373,10 @@ def serve_file(task_id):
 
     # Determine content-type
     ext = Path(filename).suffix.lower()
-    content_type = "audio/mpeg" if ext == ".mp3" else "video/mp4"
+    if ext in [".mp3", ".m4a", ".webm"]:
+        content_type = "audio/mpeg" if ext == ".mp3" else ("audio/mp4" if ext == ".m4a" else "audio/webm")
+    else:
+        content_type = "video/mp4"
 
     # Schedule automatic removal of temp folder after 5 minutes (enables retries, zero disk leaks)
     cleanup_temp_dir(tmp_dir, task_id, delay=300)
@@ -384,9 +396,10 @@ if __name__ == "__main__":
     purge_old_streamvault_temps()
     port = int(os.environ.get("PORT", 5002))
     is_cloud = os.environ.get("RAILWAY_ENVIRONMENT") or os.environ.get("RENDER") or os.environ.get("DYNO")
+    path, _ = get_ffmpeg_info()
     print(f"=====================================================")
     print(f" StreamVault running on port {port}")
-    print(f" FFmpeg: {'Found -> ' + FFMPEG_PATH if FFMPEG_PATH else 'Not found'}")
+    print(f" FFmpeg: {'Found -> ' + path if path else 'Not found'}")
     print(f" Mode: {'Cloud' if is_cloud else 'Local'}")
     print(f"=====================================================")
     if not is_cloud:
